@@ -32,14 +32,7 @@ from googleapiclient.discovery import build
 import pickle
 import os.path
 from datetime import datetime
-# ----------------------- Notepad -----------------------------------------------
-from pywinauto import Application
 import time
-import win32com.client
-import time
-import PySimpleGUI as sg
-import threading
-import json
 
 # LangSmith
 client = Client()
@@ -84,10 +77,6 @@ calender_llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-pro"
 )
 
-notepad_llm = OllamaLLM(
-    temperature=0.1,
-    model="Qwen2-0.5B"
-)
 
 # llama3-groq-70b-8192-tool-use-preview Gemma2-9b-It gemini-1.5-pro gemini-1.5-flash   models/gemini-1.0-pro-001
 # llama-3.1-70b-versatile  llama-3.1-405b-reasoning  llama-3.1-8b-instant
@@ -751,25 +740,6 @@ google_calendar_agent = create_specialized_agent(
     "You are a specialized agent for Google Calendar operations. Use the appropriate Google Calendar tools as needed. Always include the current date and time in your responses, which is automatically added by the tools."
 )
 
-notepad_agent = create_specialized_agent(
-    notepad_llm,
-    notepad_tools,
-    "You are a specialized agent for Notepad operations. Use the appropriate Notepad tools as needed. Always include the current date and time in your responses."
-)
-
-notepad_agent = create_specialized_agent(
-    notepad_llm,
-    notepad_tools,
-    """You are a specialized agent for Notepad operations. Use the appropriate Notepad tools as needed. 
-    Always include the current date and time in your responses. For all functions, 
-    ensure you provide the input as a JSON string. For example:
-    - WriteToNotepad: '{"text": "Hello, this is a test."}'
-    - SaveNotepadFile: '{"file_path": "V:\\Notes\\Notes.txt"}'
-    - ReadNotepadFile: '{"file_path": "V:\\Notes\\Notes.txt"}'
-    Always wait for each operation to complete before moving to the next one.
-    """
-)
-
 # Define tools for the top-level agent
 specialized_tools = [
     Tool(name="Wikipedia", func=wikipedia_agent.run, description="Use for Wikipedia searches."),
@@ -783,8 +753,6 @@ specialized_tools = [
     Tool(name="Google Calendar Operations", func=google_calendar_agent.run,
          description="Use for all Google Calendar-related tasks"),
     Tool(name="Table Operations", func=query_table_tool, description="Use for table-related tasks"),
-    Tool(name="Notepad Operations", func=notepad_agent.run, 
-         description="Use for all Notepad-related tasks such as writing to Notepad, saving files, and reading files."),
 ]
 
 # Set up the agent
@@ -813,7 +781,6 @@ After using Table Operations, analyze the user's query and delegate to the appro
 - Use the Gmail Operations agent for any email-related tasks.
 - Use the Google Calendar Operations agent for any calendar-related tasks.
 - Use Coder tool for programming and coding purposes
-- Use Notepad Operations for writing, saving, and reading Notepad files.
 
 Always choose the most appropriate tool for the task at hand, but prioritize using information from Table Operations whenever possible.
 After each interaction, ensure that new information is added to the Table Operations for future reference.
@@ -855,7 +822,7 @@ async def start():
         duckduckgo_tool,
         Writer_agent,
         Coder_tool,
-    ] + gmail_tools + local_rag_tools + google_calendar_tools + table_tools + notepad_tools
+    ] + gmail_tools + local_rag_tools + google_calendar_tools + table_tools
 
     top_level_agent = initialize_agent(
         tools=all_tools,
